@@ -1,69 +1,125 @@
 import re
 
-def remove_all_occurrences(element, list):
-    while element in list:
-        list.remove(element)
 
-def get_file_size(split_input):
-    file_size_dict = {}
-    file_list = [x for x in split_input if not re.search("\$ ", x)]
-    file_list = [x for x in file_list if not re.search("dir ", x)]
-    for file in file_list:
-        file_size_dict.update({file.split()[1] : int(file.split()[0])})
-    return file_size_dict 
-    
-def get_file_location(split_input, file_size_dict):
-    file_location_dict = {}
-    for file_name in file_size_dict.keys():
-        file_index = None
-        for index, line in enumerate(split_input):
-            if re.search(" " + file_name, line):
-                file_index = index
-                break
-        index = file_index
-        while index >= 0:
-            index -= 1
-            if re.search("cd ", split_input[index]):
-                file_location_dict.update({file_name : split_input[index].split()[2]})
-                break
-    return file_location_dict
+def get_file_indices(split_input):
+    file_indices = {}
+    for index, line in enumerate(split_input):
+        if re.search("\d+", line):
+            file_indices.update({line: index})
+    return file_indices
 
-def get_folder_location(split_input):
-    folder_location_dict = {}
-    folder_position_dict = {}
+
+def print_dict_by_line(dictionary):
+    for key, value in dictionary.items():
+        print(f"{key} : {value}")
+
+
+def print_list_by_line(listable):
+    for value in listable:
+        print(value)
+
+
+def get_file_paths(split_input, file_indices):
+    file_paths = {}
+    for file_name, file_index in file_indices.items():
+        pointer = file_index
+        file_path = ""
+        file_path += file_name.split()[1]
+        current_dir = ""
+        cd_mode, dir_mode = True, False
+        while pointer >= 0:
+            pointer -= 1
+            location = split_input[pointer]
+            if cd_mode and re.search("cd ", location):
+                current_dir = location.split()[2]
+                file_path = current_dir + "/" + file_path
+                cd_mode, dir_mode = False, True
+            if dir_mode and re.search("dir " + current_dir, location):
+                cd_mode, dir_mode = True, False
+        file_paths.update({file_name: file_path})
+    return file_paths
+
+
+def get_dir_indices(split_input):
+    dir_indices = {}
+    dir_indices.update({0: "//"})
     for index, line in enumerate(split_input):
         if re.search("dir ", line):
-            folder_position_dict.update({line.split()[1] : index})
-    for folder_name, folder_index in folder_position_dict.items():
-        index = folder_index
-        while index >= 0:
-            index -= 1
-            if re.search("cd ", split_input[index]):
-                folder_location_dict.update({folder_name : split_input[index].split()[2]})
-                break
-    return folder_location_dict
+            dir_indices.update({index: line.split()[1]})
+    return dir_indices
 
-def get_folder_size(file_size_dict, file_location_dict, folder_location_dict):
-    folder_size_dict = {}
-    folder_list = list(folder_location_dict.keys())
-    folder_list.reverse()
-    for folder_name in folder_list:
-        folder_size = 0
-        for file_name, parent_folder in file_location_dict.items():
-            if parent_folder == folder_name:
-                folder_size += file_size_dict[file_name]
-        for child_folder, parent_folder in folder_location_dict.items():
-            if parent_folder == folder_name:
-                folder_size += folder_size_dict[child_folder]
-        folder_size_dict.update({folder_name: folder_size})
-    return folder_size_dict        
+
+def get_dir_paths(split_input, dir_indices):
+    dir_paths = []
+    for dir_index, dir_name in dir_indices.items():
+        pointer = dir_index
+        dir_path = ""
+        dir_path += dir_name
+        current_dir = ""
+        cd_mode, dir_mode = True, False
+        while pointer >= 0:
+            pointer -= 1
+            location = split_input[pointer]
+            if cd_mode and re.search("cd ", location):
+                current_dir = location.split()[2]
+                dir_path = current_dir + "/" + dir_path
+                cd_mode, dir_mode = False, True
+            if dir_mode and re.search("dir " + current_dir, location):
+                cd_mode, dir_mode = True, False
+        dir_paths.append(dir_path)
+    return dir_paths
+
+
+def get_dir_sizes(file_paths, dir_paths):
+    dir_sizes = {}
+    for dir_path in dir_paths:
+        dir_size = 0
+        for file_name, file_path in file_paths.items():
+            if dir_path in file_path:
+                dir_size += int(file_name.split()[0])
+        dir_sizes.update({dir_path: dir_size})
+    return dir_sizes
+
+
+def find_small_dirs(dir_sizes):
+    MAX_SIZE = 100000
+    small_dirs = dict(filter(lambda item: int(item[1]) <= MAX_SIZE, dir_sizes.items()))
+    return small_dirs
+
+
+def get_total_size(dirs):
+    total = 0
+    for _, size in dirs.items():
+        total += size
+    return total
+
+
+def get_dir_size_to_delete(dir_sizes):
+    TOTAL_DISK_SPACE = 70000000
+    UPDATE_FILE_SIZE = 30000000
+    total_occupied_space = dir_sizes["//"]
+    space_needed = UPDATE_FILE_SIZE - (TOTAL_DISK_SPACE - total_occupied_space)
+    record_size_difference = float("inf")
+    for _, dir_size in dir_sizes.items():
+        if (
+            dir_size >= space_needed
+            and dir_size - space_needed <= record_size_difference
+        ):
+            record_size_difference = dir_size - space_needed
+    return record_size_difference + space_needed
+
 
 if __name__ == "__main__":
     with open("input.txt") as f:
         content = f.read()
     split_content = content.split("\n")
-    file_size_dict = get_file_size(split_content)
-    file_location_dict = get_file_location(split_content, file_size_dict)
-    folder_location_dict = get_folder_location(split_content)
-    folder_size_dict = get_folder_size(file_size_dict, file_location_dict, folder_location_dict)
-    print(folder_size_dict)
+    file_indices = get_file_indices(split_content)
+    file_paths = get_file_paths(split_content, file_indices)
+    dir_indices = get_dir_indices(split_content)
+    dir_paths = get_dir_paths(split_content, dir_indices)
+    dir_sizes = get_dir_sizes(file_paths, dir_paths)
+    small_dirs = find_small_dirs(dir_sizes)
+    total_small_dirs_size = get_total_size(small_dirs)
+    print(total_small_dirs_size)
+    dir_size_to_delete = get_dir_size_to_delete(dir_sizes)
+    print(dir_size_to_delete)
