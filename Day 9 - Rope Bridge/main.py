@@ -31,9 +31,7 @@ class Rope:
                 self.nodes_y[index] += delta_y // abs(delta_y)
             elif delta_y == 0 and abs(delta_x) > 1:
                 self.nodes_x[index] += delta_x // abs(delta_x)
-            elif (abs(delta_x) > 1 and abs(delta_y) == 1) or (
-                abs(delta_y) > 1 and abs(delta_x) == 1
-            ):
+            elif delta_x**2 + delta_y**2 > 2:
                 self.nodes_x[index] += delta_x // abs(delta_x)
                 self.nodes_y[index] += delta_y // abs(delta_y)
 
@@ -55,15 +53,9 @@ class Rope:
                 self.get_next_command()
             self.move_head()
             self.move_tail()
-            # self.visualise_rope()
 
     def calculate_total_visited(self):
         return len(set(self.history))
-
-    def visualise_rope(self):
-        print()
-        for i in zip(self.nodes_x, self.nodes_y):
-            print(i)
 
 
 if __name__ == "__main__":
