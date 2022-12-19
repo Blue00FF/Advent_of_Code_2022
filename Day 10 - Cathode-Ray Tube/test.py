@@ -152,4 +152,10 @@ def test_signal_strength():
     device = Elf_Device()
     device.run_CPU(test_input)
     device.appraise_signal_strength()
-    assert device.total_signal_strength == 13140
+    assert device.cumulative_signal_strength == 13140
+
+
+device = Elf_Device()
+device.run_CPU(test_input)
+device.generate_screen_image()
+device.display_screen()
