@@ -1,6 +1,7 @@
 class Square:
     grid = []
     history = []
+    scenic_starts = []
     GRID_HEIGHT = None
     GRID_WIDTH = None
 
@@ -35,7 +36,7 @@ class Square:
                 if current_pos.is_finish:
                     Square.history.append(element)
                     solution_found = True
-                    continue
+                    break
                 if current_pos.is_stuck():
                     continue
                 if current_pos.up_accessible and not current_pos.up_attempted:
@@ -51,10 +52,23 @@ class Square:
                     Square.history.append(element + [(x, y + 1)])
                     current_pos.right_attempted = True
 
-        solution_lengths = []
+        record_length = float("inf")
         for solution in Square.history:
-            solution_lengths.append(len(solution))
-        return min(solution_lengths) - 1
+            if len(solution) < record_length:
+                record_length = len(solution)
+
+        return record_length - 1
+
+    def reset_grid(previous_start, new_start):
+        Square.history = []
+        Square.grid[previous_start[0]][previous_start[1]].is_start = False
+        Square.grid[new_start[0]][new_start[1]].set_as_start()
+        for row in Square.grid:
+            for square in row:
+                square.up_attempted = False
+                square.down_attempted = False
+                square.left_attempted = False
+                square.right_attempted = False
 
     def __init__(self, x, y, letter_height) -> None:
         self.x_pos = x
@@ -72,9 +86,10 @@ class Square:
         self.is_finish = False
         if letter_height == "S":
             self.set_as_start()
-            Square.history.append([(x, y)])
         elif letter_height == "E":
             self.set_as_finish()
+        elif letter_height == "a":
+            Square.scenic_starts.append((x, y))
 
     def __str__(self) -> str:
         return f"""        Coordinates: ({self.x_pos}, {self.y_pos})
@@ -149,6 +164,7 @@ class Square:
     def set_as_start(self):
         self.is_start = True
         self.height = 1
+        Square.history.append([(self.x_pos, self.y_pos)])
 
     def set_as_finish(self):
         self.is_finish = True
@@ -168,4 +184,13 @@ if __name__ == "__main__":
         content = f.read()
     Square.convert_to_grid(content)
     Square.determine_all_possible_moves()
-    print(Square.find_path_to_finish())
+    current_record = Square.find_path_to_finish()
+    print(current_record)
+    previous_start = (20, 0)
+    for possible_start in Square.scenic_starts:
+        Square.reset_grid(previous_start, possible_start)
+        new_path_length = Square.find_path_to_finish()
+        if new_path_length < current_record:
+            current_record = new_path_length
+        previous_start = possible_start
+    print(current_record)
