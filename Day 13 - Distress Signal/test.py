@@ -33,3 +33,7 @@ def test_find_correctly_sorted_indices():
 
 def test_sum_of_correctly_sorted_indices():
     assert sum(find_correctly_sorted_indices(parsed_input)) == 13
+
+
+def test_index_product():
+    assert determine_index_product(test_input) == 140
