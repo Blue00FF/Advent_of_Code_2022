@@ -25,7 +25,8 @@ class Sensor:
             Sensor.beacon_positions.append((x_beacon, y_beacon))
 
     def lay_out_sensors(x_position):
-        for sensor in Sensor.sensors:
+        for sensor_index, sensor in enumerate(Sensor.sensors):
+            print(f"{round(sensor_index/28*100,0)} % done")
             min_y = sensor.y - sensor.detection_distance
             max_y = sensor.y + sensor.detection_distance
             x = x_position
@@ -72,5 +73,5 @@ class Sensor:
 if __name__ == "__main__":
     with open("input.txt") as f:
         content = f.read()
-    Sensor.initial_set_up(content, 2000000)
+    Sensor.part_1_set_up(content, 2000000)
     print(Sensor.count_detected_positions(2000000))
