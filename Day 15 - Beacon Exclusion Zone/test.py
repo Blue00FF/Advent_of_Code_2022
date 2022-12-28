@@ -19,3 +19,10 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3"""
 def test_count_detected_positions():
     Sensor.part_1_set_up(test_input, 10)
     assert Sensor.count_detected_positions(10) == 26
+
+
+def test_count_undetected_positions():
+    Sensor.MAX_COORD = 20
+    Sensor.part_2_set_up(test_input)
+    assert Sensor.grid[0][0] == 11
+    assert Sensor.grid[0][1] == 14
