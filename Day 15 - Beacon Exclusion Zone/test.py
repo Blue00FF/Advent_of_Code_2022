@@ -15,6 +15,7 @@ Sensor at x=16, y=7: closest beacon is at x=15, y=3
 Sensor at x=14, y=3: closest beacon is at x=15, y=3
 Sensor at x=20, y=1: closest beacon is at x=15, y=3"""
 
-Sensor.initial_set_up(test_input)
-Sensor.visualise_grid()
-print(Sensor.calculate_detected_positions(10))
+
+def test_count_detected_positions():
+    Sensor.part_1_set_up(test_input, 10)
+    assert Sensor.count_detected_positions(10) == 26
