@@ -19,3 +19,9 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3"""
 def test_count_detected_positions():
     Sensor.process_input(test_input)
     assert Sensor.count_excluded_squares(10) == 26
+
+
+def test_find_free_square():
+    Sensor.MAX_COORD = 20
+    free_coord = Sensor.find_free_square()
+    assert free_coord[1] * 4000000 + free_coord[0] == 56000011

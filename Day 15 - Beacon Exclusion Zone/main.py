@@ -10,8 +10,6 @@ class Sensor:
     sensor_positions = []
     beacon_positions = []
     MAX_COORD = 0
-    X_MIN = float("inf")
-    X_MAX = float("-inf")
     Y_MIN = float("inf")
     Y_MAX = float("-inf")
 
@@ -27,13 +25,10 @@ class Sensor:
             Sensor.sensors.append(Sensor(x_sensor, y_sensor, x_beacon, y_beacon))
             Sensor.sensor_positions.append((x_sensor, y_sensor))
             Sensor.beacon_positions.append((x_beacon, y_beacon))
+        Sensor.beacon_positions = set(Sensor.beacon_positions)
         for sensor in Sensor.sensors:
-            if sensor.x + sensor.detection_distance > Sensor.X_MAX:
-                Sensor.X_MAX = sensor.x + sensor.detection_distance
             if sensor.y + sensor.detection_distance > Sensor.Y_MAX:
                 Sensor.Y_MAX = sensor.y + sensor.detection_distance
-            if sensor.x - sensor.detection_distance < Sensor.X_MIN:
-                Sensor.X_MIN = sensor.x - sensor.detection_distance
             if sensor.y - sensor.detection_distance < Sensor.Y_MIN:
                 Sensor.Y_MIN = sensor.y - sensor.detection_distance
 
@@ -58,6 +53,39 @@ class Sensor:
                 exclusion_counter += 1
         return exclusion_counter
 
+    def find_free_square():
+        for sensor in Sensor.sensors:
+            x = sensor.x + sensor.detection_distance + 1
+            y = sensor.y
+            for _ in range(sensor.detection_distance + 2):
+                x -= 1
+                y += 1
+                if x < 0 or x > Sensor.MAX_COORD or y < 0 or y > Sensor.MAX_COORD:
+                    continue
+                if not Sensor.check_exclusion(x, y):
+                    return (x, y)
+            for _ in range(sensor.detection_distance + 2):
+                x -= 1
+                y -= 1
+                if x < 0 or x > Sensor.MAX_COORD or y < 0 or y > Sensor.MAX_COORD:
+                    continue
+                if not Sensor.check_exclusion(x, y):
+                    return (x, y)
+            for _ in range(sensor.detection_distance + 2):
+                x += 1
+                y -= 1
+                if x < 0 or x > Sensor.MAX_COORD or y < 0 or y > Sensor.MAX_COORD:
+                    continue
+                if not Sensor.check_exclusion(x, y):
+                    return (x, y)
+            for _ in range(sensor.detection_distance + 2):
+                x += 1
+                y -= 1
+                if x < 0 or x > Sensor.MAX_COORD or y < 0 or y > Sensor.MAX_COORD:
+                    continue
+                if not Sensor.check_exclusion(x, y):
+                    return (x, y)
+
     def __init__(self, x, y, x_beacon, y_beacon) -> None:
         self.x = x
         self.y = y
@@ -81,5 +109,7 @@ if __name__ == "__main__":
     with open("input.txt") as f:
         content = f.read()
     Sensor.process_input(content)
-    print(Sensor.count_excluded_squares(2000000))
-    # Sensor.MAX_COORD = 4000000
+    # print(Sensor.count_excluded_squares(2000000))
+    Sensor.MAX_COORD = 4000000
+    free_coord = Sensor.find_free_square()
+    print(free_coord[1] * Sensor.MAX_COORD + free_coord[0])
