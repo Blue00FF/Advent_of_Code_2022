@@ -1,17 +1,11 @@
+import numpy as np
+
+
 class Valve:
     valves = {}
     useful_valves = []
-    current_flow = 0
-    time_remaining = 30
-    released_pressure = 0
-
-    def flow():
-        Valve.released_pressure += Valve.current_flow
-        Valve.time_remaining -= 1
-
-    def move_to_valve(valve_label):
-        Valve.flow()
-        return Valve.valves[valve_label]
+    complete_paths = []
+    max_released_pressure = 0
 
     def process_input(content):
         split_input = content.split("\n")
@@ -19,23 +13,17 @@ class Valve:
             Valve(line)
 
     def start_part_1():
-        current_valve = Valve.valves["AA"]
-        while Valve.time_remaining > 0:
-            next_valve = current_valve.find_next_best_valve()
-            if next_valve:
-                path_to_next = current_valve.find_path(next_valve)
-                for step in path_to_next:
-                    current_valve = Valve.move_to_valve(step.valve_label)
-                current_valve.open()
-            else:
-                Valve.flow()
-
-    def iterate_flow_rates(current_level):
-        current_level_flow_rates = []
-        for valve in current_level:
-            if not valve.is_open:
-                current_level_flow_rates.append(valve.flow_rate)
-        return current_level_flow_rates
+        Valve.find_all_possible_paths()
+        Valve.max_released_pressure = 0
+        for path in Valve.complete_paths:
+            current_flow = 0
+            released_pressure = 0
+            for i in range(1, len(path)):
+                path_length = path[i - 1].find_path_length(path[i])
+                released_pressure += current_flow * path_length
+                current_flow += path[i].flow_rate
+            if released_pressure > Valve.max_released_pressure:
+                Valve.max_released_pressure = released_pressure
 
     def advance_level(current_level):
         next_level_labels = []
@@ -46,6 +34,66 @@ class Valve:
         for label in next_level_labels:
             next_level.append(Valve.valves[label])
         return next_level
+
+    def find_all_possible_paths():
+        current_valve = Valve.valves["AA"]
+        incomplete_paths = [[x] for x in Valve.useful_valves]
+        paths_time_spent = {}
+        Valve.complete_paths = []
+        for index in range(len(incomplete_paths)):
+            incomplete_paths[index] = [current_valve] + incomplete_paths[index]
+            paths_time_spent.update(
+                {
+                    Valve.path_to_string(
+                        incomplete_paths[index]
+                    ): current_valve.find_path_length(incomplete_paths[index][1])
+                    + 1
+                }
+            )
+        while len(incomplete_paths) > 0:
+            temp_incomplete_paths = incomplete_paths.copy()
+            incomplete_paths = []
+            for path_index in range(len(temp_incomplete_paths)):
+                current_valve = temp_incomplete_paths[path_index][-1]
+                next_steps = Valve.useful_valves.copy()
+                for step in next_steps:
+                    if step not in temp_incomplete_paths[path_index]:
+                        time_spent = (
+                            paths_time_spent[
+                                Valve.path_to_string(temp_incomplete_paths[path_index])
+                            ]
+                            + current_valve.find_path_length(step)
+                            + 1
+                        )
+
+                        if time_spent < 30:
+                            incomplete_paths.append(
+                                temp_incomplete_paths[path_index] + [step]
+                            )
+                            paths_time_spent.update(
+                                {
+                                    Valve.path_to_string(
+                                        temp_incomplete_paths[path_index] + [step]
+                                    ): time_spent
+                                }
+                            )
+                        elif time_spent == 30:
+                            Valve.complete_paths.append(
+                                temp_incomplete_paths[path_index] + [step]
+                            )
+                        elif (
+                            temp_incomplete_paths[path_index]
+                            not in Valve.complete_paths
+                        ):
+                            Valve.complete_paths.append(
+                                temp_incomplete_paths[path_index]
+                            )
+
+    def path_to_string(path):
+        result = ""
+        for valve in path:
+            result += valve.valve_label
+        return result
 
     def __init__(self, line) -> None:
         valve_info = line.split()
@@ -70,31 +118,9 @@ class Valve:
     def __eq__(self, o: object) -> bool:
         return self.valve_label == o.valve_label
 
-    def open(self):
-        if self.is_open:
-            raise Exception("Valve is already open!")
-        Valve.flow()
-        self.is_open = True
-        Valve.current_flow += self.flow_rate
-
-    def find_next_best_valve(self):
-        champion_valve = None
-        max_score = 0
-        for valve in Valve.useful_valves:
-            valve_score = valve.flow_rate * (
-                Valve.time_remaining - len(self.find_path(valve)) - 1
-            )
-            if valve_score > max_score:
-                max_score = valve_score
-                champion_valve = valve
-        if champion_valve:
-            Valve.useful_valves.remove(champion_valve)
-            print(champion_valve.valve_label)
-        return champion_valve
-
-    def find_path(self, next_valve):
+    def find_path_length(self, next_valve):
         if self == next_valve:
-            return []
+            return 0
         possible_paths = [[x] for x in Valve.advance_level([self])]
         while True:
             temp_possible_paths = possible_paths.copy()
@@ -102,7 +128,7 @@ class Valve:
             for path_index in range(len(temp_possible_paths)):
                 current_valve = temp_possible_paths[path_index][-1]
                 if current_valve == next_valve:
-                    return temp_possible_paths[path_index]
+                    return len(temp_possible_paths[path_index])
                 next_steps = Valve.advance_level([current_valve])
                 for step in next_steps:
                     possible_paths.append(temp_possible_paths[path_index] + [step])
@@ -113,4 +139,4 @@ if __name__ == "__main__":
         content = f.read()
     Valve.process_input(content)
     Valve.start_part_1()
-    print(Valve.released_pressure)
+    print(Valve.max_released_pressure)

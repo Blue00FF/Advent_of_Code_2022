@@ -15,4 +15,6 @@ Valve JJ has flow rate=21; tunnel leads to valve II"""
 Valve.process_input(test_input)
 Valve.start_part_1()
 # assert Valve.released_pressure == 1651
-print(Valve.released_pressure)
+print(Valve.complete_paths)
+print(Valve.useful_valves)
+print(Valve.max_released_pressure)
