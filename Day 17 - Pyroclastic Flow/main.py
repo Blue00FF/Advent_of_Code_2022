@@ -49,12 +49,10 @@ class Block:
     def turn_into_rock(self):
         self.block_type = "rock"
 
-    def turn_into_air(self):
-        self.block_type = "air"
-
 
 class Piece(abc.ABC):
-    tower_top: int = 0
+    tower_top = 0
+    wind_directions = []
 
     def process_input(content):
         Piece.wind_directions = list(content)
@@ -116,7 +114,8 @@ class Piece(abc.ABC):
             Block.get_grid_coord(x, y).turn_into_rock()
             if y > top_piece_position:
                 top_piece_position = y
-        Piece.tower_top = top_piece_position
+        if top_piece_position > Piece.tower_top:
+            Piece.tower_top = top_piece_position
 
     def push(self, direction):
         if direction == "<":
