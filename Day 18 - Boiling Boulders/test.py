@@ -21,3 +21,11 @@ def test_calculate_total_surface_area():
     Cube.process_input(test_input)
     Cube.calculate_surface_areas()
     assert Cube.calculate_total_surface_area() == 64
+
+
+def test_calculate_total_external_surface_area():
+    Cube.GRID_SIZE = 10
+    Cube.generate_grid()
+    Cube.process_input(test_input)
+    Cube.calculate_external_surface_areas()
+    assert Cube.calculate_total_external_surface_area() == 58
